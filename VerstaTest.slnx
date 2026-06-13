@@ -1,0 +1,10 @@
+<Solution>
+    <Folder Name="/SolutionItems/">
+        <File Path=".env" />
+        <File Path="compose.yaml" />
+        <File Path="Directory.Packages.props" />
+    </Folder>
+    <Project Path="VerstaTest.App\VerstaTest.App.csproj" />
+    <Project Path="VerstaTest.Domain/VerstaTest.Domain.csproj" />
+    <Project Path="VerstaTest.Infrastructure/VerstaTest.Infrastructure.csproj" />
+</Solution>

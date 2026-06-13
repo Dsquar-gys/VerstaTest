@@ -1,0 +1,67 @@
+networks:
+  versta-network:
+    driver: bridge
+
+services:
+  versta.database:
+    image: postgres:18
+    container_name: versta-database
+    restart: unless-stopped
+    environment:
+      TZ: Europe/Moscow
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    networks:
+      - versta-network
+    volumes:
+      - ./db-data:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+  
+  versta.app:
+    image: versta.app:dev
+    build:
+      context: .
+      dockerfile: VerstaTest.App/Dockerfile
+    container_name: versta-backend
+    restart: unless-stopped
+    depends_on:
+      versta.database:
+        condition: service_healthy
+    environment:
+      TZ: Europe/Moscow
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__VerstaTestDb: Host=versta.database;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+    networks:
+      - versta-network
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      
+  versta.portal:
+    image: versta.portal:dev
+    build:
+      context: ./versta.test.portal
+      dockerfile: Dockerfile
+    container_name: versta-portal
+    restart: unless-stopped
+    environment:
+      TZ: Europe/Moscow
+    networks:
+      - versta-network
+    ports:
+      - "3000:80"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:80" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
